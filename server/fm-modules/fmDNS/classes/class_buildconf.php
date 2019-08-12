@@ -1248,6 +1248,10 @@ class fm_module_buildconf extends fm_shared_module_buildconf {
 						$record_value = ($record_result[$i]->record_append == 'yes') ? $record_result[$i]->record_value . '.' . $domain_name_trim . '.' : $record_result[$i]->record_value;
 						$record_array[1 . $record_result[$i]->record_type]['Data'][] = $record_start . $separator . $record_value . $record_comment . "\n";
 						break;
+					case 'NSEC3PARAM':
+						$record_array[$record_result[$i]->record_type]['Description'] = 'DNSSEC NSEC3 signing parameters';
+						$record_array[$record_result[$i]->record_type]['Data'][] = $record_start . $separator . $record_result[$i]->record_algorithm . ' ' . $record_result[$i]->record_flags . ' ' . $record_result[$i]->record_iterations . ' ' . $record_result[$i]->record_value . $record_comment . "\n";
+						break;
 					case 'OPENPGPKEY':
 						$record_array[$record_result[$i]->record_type]['Version'] = '9.11.0';
 						$record_array[$record_result[$i]->record_type]['Description'] = 'OpenPGP Keys';
@@ -2145,8 +2149,28 @@ HTML;
 		}
 		$dnssec_ksk = join(' ', $dnssec_ksk);
 		
+		/** Get associated NSEC3PARAM info */
+		basicGetList('fm_' . $__FM_CONFIG['fmDNS']['prefix'] . 'records', array('record_algorithm', 'record_flags', 'record_iterations', 'record_value'), 'record_', 'AND record_type="NSEC3PARAM" AND domain_id=' . $domain->parent_domain_id . ' AND record_status="active"', null, false, 'DESC');
+		if (!$fmdb->sql_errors && $fmdb->num_rows) {
+			$dnssec_nsec3params = $fmdb->last_result;
+			for ($i=0; $i<$fmdb->num_rows; $i++) {
+				$nsec3param_hash = $dnssec_nsec3params[$i]->record_value;
+				$nsec3param_iterations = $dnssec_nsec3params[$i]->record_iterations;
+				$nsec3param_flags = $dnssec_nsec3params[$i]->record_flags;
+			}
+		}
+		
+		/** Generate NSEC3 options */
+		$nsec3_opts = '';
+		if (!is_null($nsec3param_hash) && !is_null($nsec3param_iterations) && !is_null($nsec3param_flags)) {
+			// -3 NSEC3 salt
+			// -H NSEC3 iterations (10)
+			// -A NSEC3 optout
+			$nsec3_opts = " -3 '" . $nsec3param_hash . "' -H " . $nsec3param_iterations . "' -A " . $nsec3param_flags;
+		}
+		
 		/** Sign zone with all keys */
-		$dnssec_output = shell_exec('cd ' . $tmp_dir . ' && ' . $dnssec_signzone . ' -g -K ' . $tmp_dir . ' -o ' . $domain->domain_name . ' ' . $dnssec_ksk . ' -f ' . $temp_zone_file . '.signed -e ' . $dnssec_endtime . ' ' . $temp_zone_file . ' ' . $dnssec_key_signing_array['ZSK'][0][0] . ' 2>&1');
+		$dnssec_output = shell_exec('cd ' . $tmp_dir . ' && ' . $dnssec_signzone . $nsec3_opts . ' -g -K ' . $tmp_dir . ' -o ' . $domain->domain_name . ' ' . $dnssec_ksk . ' -f ' . $temp_zone_file . '.signed -e ' . $dnssec_endtime . ' ' . $temp_zone_file . ' ' . $dnssec_key_signing_array['ZSK'][0][0] . ' 2>&1');
 		if (file_exists($temp_zone_file . '.signed')) {
 			$signed_zone = file_get_contents($temp_zone_file . '.signed');
 			$GLOBALS[$_SESSION['module']]['DNSSEC'][] = array('domain_id' => $domain->parent_domain_id, 'domain_dnssec_signed' => strtotime('now'));

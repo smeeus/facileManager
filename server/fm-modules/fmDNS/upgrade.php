@@ -2286,11 +2286,13 @@ function upgradefmDNS_335($__FM_CONFIG, $running_version) {
 function upgradefmDNS_340($__FM_CONFIG, $running_version) {
 	global $fmdb;
 	
-	$success = version_compare($running_version, '3.3.4', '<') ? upgradefmDNS_334($__FM_CONFIG, $running_version) : true;
+	$success = version_compare($running_version, '3.3.5', '<') ? upgradefmDNS_335($__FM_CONFIG, $running_version) : true;
 	if (!$success) return false;
-	
-	$table[] = "ALTER TABLE `fm_{$__FM_CONFIG['fmDNS']['prefix']}records` CHANGE `record_type` `record_type` ENUM('A','AAAA','CAA','CERT','CNAME','DHCID','DLV','DNAME','DNSKEY','DS','HINFO','KEY','KX','MX','NAPTR','NS','OPENPGPKEY','PTR','RP','SRV','TLSA','TXT','SSHFP') NOT NULL DEFAULT 'A'";
-	
+
+	$table[] = "ALTER TABLE `fm_{$__FM_CONFIG['fmDNS']['prefix']}records` CHANGE `record_type` `record_type` ENUM('A','AAAA','CAA','CERT','CNAME','DHCID','DLV','DNAME','DNSKEY','DS','HINFO','KEY','KX','MX','NAPTR','NS','NSEC3PARAM','OPENPGPKEY','PTR','RP','SRV','TLSA','TXT','SSHFP') NOT NULL DEFAULT 'A'";
+	$table[] = "ALTER TABLE `fm_{$__FM_CONFIG['fmDNS']['prefix']}records` CHANGE `record_flags` `record_flags` ENUM('0','1','256','257','','U','S','A','P') DEFAULT NULL";
+	$table[] = "ALTER TABLE `fm_{$__FM_CONFIG['fmDNS']['prefix']}records` ADD COLUMN `record_iterations` int(4) DEFAULT NULL AFTER `record_flags`";
+
 	/** Run queries */
 	if (count($table) && $table[0]) {
 		foreach ($table as $schema) {

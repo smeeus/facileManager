@@ -281,7 +281,7 @@ class fm_dns_records {
 		if (in_array($type, array('CERT', 'DLV', 'DS'))) {
 			$title_array[] = array('title' => __('Key Tag'), 'rel' => 'record_key_tag');
 		}
-		if (in_array($type, array('CERT', 'SSHFP', 'DLV', 'DS'))) {
+		if (in_array($type, array('CERT', 'SSHFP', 'DLV', 'DS', 'NSEC3PARAM'))) {
 			$title_array[] = array('title' => __('Algorithm'), 'rel' => 'record_algorithm');
 		}
 		if ($type == 'SSHFP' ) {
@@ -289,6 +289,10 @@ class fm_dns_records {
 		}
 		if ($type == 'DS') {
 			$title_array[] = array('title' => __('Type'), 'rel' => 'record_cert_type');
+		}
+		if ($type == 'NSEC3PARAM') {
+			$title_array[] = array('title' => __('Flags'), 'rel' => 'record_flags');
+			$title_array[] = array('title' => __('Iterations'), 'rel' => 'record_iterations');
 		}
 		if ($type == 'HINFO') {
 			$title_array[] = array('title' => __('Hardware'), 'rel' => 'record_value');
@@ -416,6 +420,14 @@ class fm_dns_records {
 				$value_textarea = true;
 			}
 			
+			if ($type == 'NSEC3PARAM') {
+				$field_values['data']['Algorithm'] = '>' . buildSelect($action . '[_NUM_][record_algorithm]', '_NUM_', $__FM_CONFIG['records']['nsec3param_algorithms'], $record_algorithm);
+				$field_values['data']['Flags'] = '>' . buildSelect($action . '[_NUM_][record_flags]', '_NUM_', $__FM_CONFIG['records']['nsec3param_flags'], $record_flags);
+				$value_textarea = true;
+				$field_values['data']['Iterations'] = '><input maxlength="5" style="width: 35px;" type="text" name="' . $action . '[_NUM_][record_iterations]" value="' . $record_iterations . '" onkeydown="return validateNumber(event)" />';
+				$value_textarea = true;
+			}
+			
 			if ($type == 'SSHFP') {
 				$field_values['data']['Algorithm'] = '>' . buildSelect($action . '[_NUM_][record_algorithm]', '_NUM_', $__FM_CONFIG['records']['sshfp_algorithms'], $record_algorithm);
 				$field_values['data']['Type'] = '>' . buildSelect($action . '[_NUM_][record_cert_type]', '_NUM_', $__FM_CONFIG['records']['digest_types'], $record_cert_type);
@@ -525,6 +537,12 @@ class fm_dns_records {
 			$field_values['data']['Record'] = '>' . $record_name . '<span class="grey">.' . $domain . '</span>';
 			$field_values['data']['TTL'] = '>' . $record_ttl;
 			$field_values['data']['Class'] = '>' . $record_class;
+			
+			if ($type == 'NSEC3PARAM') {
+				$field_values['data']['Algorithm'] = '>' . $record_algorithm;
+				$field_values['data']['Flags'] = '>' . $record_flags;
+				$field_values['data']['Iterations'] = '>' . $record_iterations;
+			}
 			
 			if ($type == 'NAPTR') {
 				$field_values['data']['Order'] = '>' . $record_weight;

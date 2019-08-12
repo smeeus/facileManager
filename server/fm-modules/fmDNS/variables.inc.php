@@ -31,8 +31,8 @@ if (!@is_array($__FM_CONFIG)) $__FM_CONFIG = array();
 
 /** Module Information */
 $__FM_CONFIG['fmDNS'] = array(
-		'version'							=> '3.3.4',
-		'client_version'					=> '3.3',
+		'version'							=> '3.4.0',
+		'client_version'					=> '3.4',
 		'description'						=> __('Easily manage one or more ISC BIND servers through a web interface. No more editing configuration and zone files manually.', 'fmDNS'),
 		'prefix'							=> 'dns_',
 		'required_dns_version'				=> '9.3',
@@ -79,6 +79,10 @@ $__FM_CONFIG['records']['sshfp_algorithms'] = array(
 											array('ED25519', 4)
 											);
 $__FM_CONFIG['records']['naptr_flags']	= array('U', 'S', 'A', 'P', '');
+$__FM_CONFIG['records']['nsec3param_algorithms'] = array(
+											array('SHA-1', 1)
+											);
+$__FM_CONFIG['records']['nsec3param_flags']	= array('0', '1');
 $__FM_CONFIG['records']['flags']		= array('0', '256', '257');
 $__FM_CONFIG['records']['digest_types'] = array(
 											array('SHA-1', 1),
